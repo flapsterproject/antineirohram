@@ -1,11 +1,13 @@
 // main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const TOKEN = Deno.env.get("BOT_TOKEN"); // твой бот-токен
+const TOKEN = Deno.env.get("BOT_TOKEN"); // Твой токен
+if (!TOKEN) throw new Error("BOT_TOKEN not set");
+
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const SECRET_PATH = "/sarcasm"; // путь вебхука
 
-// Саркастические шаблоны
+// Саркастические ответы
 const sarcasticReplies = [
   (text: string) => `Ого, @neirohambot пишет: "${text}"… ну что ж, шедевр! 😏`,
   (text: string) => `Внимание всем! @neirohambot сказал: "${text}" 🙄`,
@@ -13,36 +15,45 @@ const sarcasticReplies = [
   (text: string) => `"${text}" — так говорил @neirohambot. Истинная мудрость! 😂`,
 ];
 
-// Функция для отправки сообщения
+// Функция для отправки сообщений
 async function sendMessage(chat_id: number | string, text: string) {
   const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id, text, parse_mode: "HTML" }),
+    body: JSON.stringify({ chat_id, text }),
   });
 
   const data = await res.json();
-  if (!data.ok) console.error("Ошибка отправки:", data);
+  if (!data.ok) console.error("Ошибка отправки сообщения:", data);
 }
 
-// HTTP сервер Deno для вебхука
+// HTTP сервер для вебхука
 serve(async (req: Request) => {
-  const { pathname } = new URL(req.url);
+  const url = new URL(req.url);
 
-  if (pathname !== SECRET_PATH) return new Response("Bot is running.", { status: 200 });
+  if (url.pathname !== SECRET_PATH) return new Response("Bot is running", { status: 200 });
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-  const update = await req.json();
+  let update;
+  try {
+    update = await req.json();
+  } catch (e) {
+    return new Response("Invalid JSON", { status: 400 });
+  }
+
   const message = update.message;
-  const chatId = message?.chat?.id;
-  const text = message?.text;
+  if (!message) return new Response("No message", { status: 200 });
+
+  const chatId = message.chat?.id;
+  const text = message.text;
 
   if (!chatId || !text) return new Response("No chat ID or text", { status: 200 });
 
-  // Если сообщение от @neirohambot
+  // Отвечаем только @neirohambot
   if (message.from?.username === "neirohambot") {
     const replyFunc = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
     const replyText = replyFunc(text);
+
     await sendMessage(chatId, replyText);
   }
 
