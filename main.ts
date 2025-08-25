@@ -2,10 +2,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
-const SECRET_PATH = "/bot";
+const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй"];
+const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй", "tt"];
 const SARCASTIC_REPLIES = [
   "О, культурный человек в чате. Аж уши завяли 🎻",
   "Мама бы тобой гордилась. Ну или выгнала из дома 🤷‍♂️",
