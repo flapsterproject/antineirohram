@@ -1,8 +1,6 @@
 // main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const kv = await Deno.openKv();
-
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm"; // webhook path
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
@@ -33,14 +31,14 @@ serve(async (req: Request) => {
   const update = await req.json();
   const message = update.message;
   const callbackQuery = update.callback_query;
+
   const chatId = message?.chat?.id || callbackQuery?.message?.chat?.id;
   const text = message?.text;
   const fromUser = message?.from;
-  const messageId = callbackQuery?.message?.message_id;
 
   if (!chatId) return new Response("No chat ID", { status: 200 });
 
-  // ✅ React only if it's @neirohambot and it's really a bot
+  // React only to @neirohambot (username check)
   if (fromUser?.is_bot && fromUser?.username?.toLowerCase() === "neirohambot" && text) {
     const reply = getRandomReply();
 
