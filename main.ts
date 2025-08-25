@@ -1,20 +1,20 @@
 // main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const TOKEN = Deno.env.get("BOT_TOKEN"); // задаёшь через переменные окружения
-const SECRET_PATH = "/sarcasm"; // Webhook путь
+const TOKEN = Deno.env.get("BOT_TOKEN");
+const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-// список "запрещённых" слов (мат/брань)
-const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй", "tt"];
+// список запрещённых слов (можешь расширять)
+const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй" ,"tt"];
 
 // саркастические ответы
 const SARCASTIC_REPLIES = [
-  "Ого, какое культурное выражение. Бабушка бы тобой гордилась 🤦‍♂️",
-  "Уровень интеллекта: максимальный. Прям Шекспир нашего чата 🎭",
-  "Да-да, продолжай, мы тут все словарь пополняем 📚",
-  "Вау, очередной поэт подъехал. Тебя точно на премию выдвинут 🏆",
-  "Ну вот без этого слова мы бы вообще тебя не поняли 😂",
+  "О, культурный человек в чате. Аж уши завяли 🎻",
+  "Мама бы тобой гордилась. Ну или выгнала из дома 🤷‍♂️",
+  "Прям как кандидат на премию *«Поэт Года»* 🏆",
+  "Да-да, именно так люди и становятся гениями 🤡",
+  "Спасибо, мы пополнили словарь великих мыслей 📚",
 ];
 
 function containsBadWord(text: string): boolean {
@@ -23,6 +23,30 @@ function containsBadWord(text: string): boolean {
 
 function randomReply() {
   return SARCASTIC_REPLIES[Math.floor(Math.random() * SARCASTIC_REPLIES.length)];
+}
+
+async function sendMessage(chatId: number, text: string, replyTo?: number) {
+  await fetch(`${TELEGRAM_API}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      reply_to_message_id: replyTo,
+      parse_mode: "Markdown",
+    }),
+  });
+}
+
+async function deleteMessage(chatId: number, messageId: number) {
+  await fetch(`${TELEGRAM_API}/deleteMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
+    }),
+  });
 }
 
 serve(async (req: Request) => {
@@ -39,21 +63,21 @@ serve(async (req: Request) => {
   const message = update.message;
   const chatId = message?.chat?.id;
   const text = message?.text;
+  const messageId = message?.message_id;
 
   if (!chatId || !text) return new Response("No message", { status: 200 });
 
-  // проверяем мат
-  if (containsBadWord(text)) {
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        reply_to_message_id: message.message_id,
-        text: randomReply(),
-      }),
-    });
+  // проверка чата: работает и в group, и в supergroup
+  if (message.chat.type === "group" || message.chat.type === "supergroup") {
+    if (containsBadWord(text)) {
+      // удаляем сообщение
+      await deleteMessage(chatId, messageId);
+
+      // пишем сарказм
+      await sendMessage(chatId, randomReply());
+    }
   }
 
   return new Response("OK", { status: 200 });
 });
+
