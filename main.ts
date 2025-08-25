@@ -5,17 +5,31 @@ const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-// саркастические ответы
-const SARCASTIC_REPLIES = [
-  "О, @neirohambot снова решил просветить нас 🙄",
-  "Какой сюрприз, это же @neirohambot 🎉",
-  "Внимание, гений в чате! Спасибо, @neirohambot 😂",
-  "Опять ты, @neirohambot? Не устанешь удивлять 🎭",
-  "Ну что ж, без тебя мы тут бы пропали 🏆",
+// саркастические и смешные ответы к пользователям
+const USER_REPLIES = [
+  "Ого, какой умный комментарий 😂",
+  "Спасибо, твоя мысль очень ценна 🤦‍♂️",
+  "Ты прямо философ нашего чата 🎭",
+  "Вау, уровень сарказма: эксперт 🏆",
+  "Продолжай, мы тут все словарь пополняем 📚",
 ];
 
-function randomReply() {
-  return SARCASTIC_REPLIES[Math.floor(Math.random() * SARCASTIC_REPLIES.length)];
+// саркастические фразы про @neirohambot
+const BOT_REPLIES = [
+  "@neirohambot, я явно умнее тебя 🙄",
+  "@neirohambot, ну кто же так думает 😂",
+  "@neirohambot, ты опять пытаешься меня превзойти? 🎭",
+  "@neirohambot, слишком просто для меня 😎",
+  "@neirohambot, спасибо за развлечение 🤡",
+];
+
+function randomReply(arr: string[]) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// случайное решение: обычный сарказм или про @neirohambot
+function decideReply() {
+  return Math.random() < 0.3 ? randomReply(BOT_REPLIES) : randomReply(USER_REPLIES);
 }
 
 async function sendMessage(chatId: number, text: string, replyTo?: number) {
@@ -39,15 +53,14 @@ serve(async (req: Request) => {
   const update = await req.json();
   const msg = update.message;
   const chatId = msg?.chat?.id;
-  const text = msg?.text;
   const messageId = msg?.message_id;
-  const username = msg?.from?.username;
 
-  if (!chatId || !text || !username) return new Response("ok");
+  if (!chatId || !msg?.text) return new Response("ok");
 
-  // ✅ реагируем только на сообщения пользователя @neirohambot
-  if (username.toLowerCase() === "neirohambot") {
-    await sendMessage(chatId, randomReply(), messageId);
+  // реагируем только на пользователей (не на других ботов)
+  if (!msg.from?.is_bot) {
+    const reply = decideReply();
+    await sendMessage(chatId, reply, messageId);
   }
 
   return new Response("ok");
