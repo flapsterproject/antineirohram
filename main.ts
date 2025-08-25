@@ -4,8 +4,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
+const CHAT_ID = Number(Deno.env.get("CHAT_ID")); // сюда вставь ID группы
 
-// саркастические и смешные ответы к пользователям
+// саркастические ответы к пользователям
 const USER_REPLIES = [
   "Ого, какой умный комментарий 😂",
   "Спасибо, твоя мысль очень ценна 🤦‍♂️",
@@ -45,6 +46,13 @@ async function sendMessage(chatId: number, text: string, replyTo?: number) {
   });
 }
 
+// Таймер: каждые 60 секунд отправляем сарказм про @neirohambot
+setInterval(() => {
+  const text = randomReply(BOT_REPLIES);
+  sendMessage(CHAT_ID, text).catch(console.error);
+}, 60_000); // 60 000 мс = 1 минута
+
+// Webhook для реакции на пользователей
 serve(async (req: Request) => {
   const { pathname } = new URL(req.url);
   if (pathname !== SECRET_PATH) return new Response("ok");
@@ -57,7 +65,7 @@ serve(async (req: Request) => {
 
   if (!chatId || !msg?.text) return new Response("ok");
 
-  // реагируем только на пользователей (не на других ботов)
+  // реагируем только на обычных пользователей
   if (!msg.from?.is_bot) {
     const reply = decideReply();
     await sendMessage(chatId, reply, messageId);
@@ -65,6 +73,7 @@ serve(async (req: Request) => {
 
   return new Response("ok");
 });
+
 
 
 
