@@ -1,28 +1,11 @@
+// main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
-const SECRET_PATH = "/sarcasm";
+const SECRET_PATH = "/sarcasm"; // путь вебхука
 
-// Функция для отправки сообщений
-async function sendMessage(chat_id: number | string, text: string) {
-  const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id,
-      text,
-      parse_mode: "HTML", // можно использовать HTML для форматирования
-    }),
-  });
-
-  const data = await res.json();
-  if (!data.ok) {
-    console.error("Ошибка отправки сообщения:", data);
-  }
-}
-
-// Саркастические ответы с шаблоном текста
+// Саркастические ответы
 const sarcasticReplies = [
   (text: string) => `Ого, @neirohambot пишет: "${text}"… ну что ж, шедевр! 😏`,
   (text: string) => `Внимание всем! @neirohambot сказал: "${text}" 🙄`,
@@ -31,22 +14,38 @@ const sarcasticReplies = [
 ];
 
 serve(async (req: Request) => {
-  const url = new URL(req.url);
-  if (url.pathname !== SECRET_PATH) return new Response("Not Found", { status: 404 });
+  const { pathname } = new URL(req.url);
 
-  const body = await req.json();
-
-  if (body.message && body.message.from?.username === "neirohambot") {
-    const chat_id = body.message.chat.id;
-    const text = body.message.text || "";
-
-    // Если текст есть, отправляем сарказм
-    if (text.trim().length > 0) {
-      const replyFunc = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
-      const reply = replyFunc(text);
-      await sendMessage(chat_id, reply);
-    }
+  if (pathname !== SECRET_PATH) {
+    return new Response("Bot is running.", { status: 200 });
   }
 
-  return new Response("ok");
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
+  const update = await req.json();
+  const message = update.message;
+  const chatId = message?.chat?.id;
+  const text = message?.text;
+
+  if (!chatId || !text) return new Response("No chat ID or text", { status: 200 });
+
+  // Проверяем, что сообщение от @neirohambot
+  if (message.from?.username === "neirohambot") {
+    const replyFunc = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
+    const replyText = replyFunc(text);
+
+    await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: replyText,
+        parse_mode: "HTML",
+      }),
+    });
+  }
+
+  return new Response("OK", { status: 200 });
 });
