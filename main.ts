@@ -2,13 +2,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
-const SECRET_PATH = "/sarcasm";
+const SECRET_PATH = "/bot";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-// список запрещённых слов (можешь расширять)
-const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй" ,"tt"];
-
-// саркастические ответы
+const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй"];
 const SARCASTIC_REPLIES = [
   "О, культурный человек в чате. Аж уши завяли 🎻",
   "Мама бы тобой гордилась. Ну или выгнала из дома 🤷‍♂️",
@@ -60,24 +57,31 @@ serve(async (req: Request) => {
   }
 
   const update = await req.json();
+  console.log("👉 UPDATE:", JSON.stringify(update, null, 2)); // ЛОГИМ всё
+
   const message = update.message;
   const chatId = message?.chat?.id;
   const text = message?.text;
   const messageId = message?.message_id;
 
-  if (!chatId || !text) return new Response("No message", { status: 200 });
+  if (!chatId || !text) {
+    console.log("⚠️ Нет текста в сообщении");
+    return new Response("No message", { status: 200 });
+  }
 
-  // проверка чата: работает и в group, и в supergroup
   if (message.chat.type === "group" || message.chat.type === "supergroup") {
+    console.log(`📩 Сообщение в группе: ${text}`);
     if (containsBadWord(text)) {
-      // удаляем сообщение
+      console.log("❌ Мат обнаружен, удаляем + отвечаем");
       await deleteMessage(chatId, messageId);
-
-      // пишем сарказм
       await sendMessage(chatId, randomReply());
     }
+  } else if (message.chat.type === "private") {
+    console.log(`📩 Личка: ${text}`);
+    await sendMessage(chatId, "Я работаю, но модерация только в группах 😉");
   }
 
   return new Response("OK", { status: 200 });
 });
+
 
