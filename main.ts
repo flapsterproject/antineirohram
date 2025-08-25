@@ -6,7 +6,7 @@ const SECRET_PATH = "/sarcasm"; // Webhook путь
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
 // список "запрещённых" слов (мат/брань)
-const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй"];
+const BAD_WORDS = ["бля", "сука", "нахуй", "ебать", "пиздец", "хуй", "tt"];
 
 // саркастические ответы
 const SARCASTIC_REPLIES = [
