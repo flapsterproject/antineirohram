@@ -6,9 +6,9 @@ const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CHAT_ID = Number(Deno.env.get("CHAT_ID"));
 
-const CREATOR_USERNAME = "amangeldimasakov"; // <- сюда твой username без @
+const CREATOR_USERNAME = "amangeldimasakov"; // <- твой username без @
 
-// Обычные ответы по ключевым словам для всех пользователей
+// Словарь ключевых слов для обычных пользователей
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро"], reply: "О, привет!" },
   { keywords: ["как дела", "как ты", "как настроение"], reply: "Как обычно — спасаю мир сарказмом 😏" },
@@ -37,14 +37,14 @@ const CREATOR_REPLIES = [
   "Твой текст: \"{text}\" — настоящий шедевр, мой создатель 😏",
 ];
 
-// Много саркастических фраз для @neirohambot
+// Сарказм про @neirohambot
 const BOT_REPLIES = [
   "@neirohambot, я явно умнее тебя 🙄 Как вообще можно было додуматься до такой мысли?",
   "@neirohambot, ты опять пытаешься меня превзойти? 😂 Серьезно, это выглядит комично!",
   "@neirohambot, слишком просто для меня 😎 Я бы на твоем месте подучился немного перед этим.",
   "@neirohambot, спасибо за развлечение 🤡 Каждый твой пост – шедевр бессмысленности!",
   "@neirohambot, ну кто же так думает? 🤔 Даже коты смеют!",
-  "@neirohambot, твой интеллект меня поражает… в плохом смысле 😏",
+  "@neirohambot, твой интеллект поражает… в плохом смысле 😏",
   "@neirohambot, очередное гениальное сообщение… для кота 😅",
   "@neirohambot, я бы назвал это искусством… если бы не было так скучно 😎",
   "@neirohambot, снова пытаешься блеснуть умом? Увы, не получилось 😏",
@@ -56,12 +56,39 @@ const BOT_REPLIES = [
   "@neirohambot, не могу перестать удивляться твоему чувству юмора… или его отсутствию 😏",
 ];
 
-// Генерация сарказма, если ключевых слов нет
-function generateSarcasticReply(text: string) {
-  return `Интересно, что ты только что написал: "${text}". Конечно, это так глубоко и умно, что я даже не могу сдержать сарказм 😏`;
+// Любимые клубы и игроки создателя
+const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
+const FOOTBALL_PLAYERS_CREATOR = ["роналдо", "cristiano ronaldo"];
+
+// Генерация дружелюбного ответа для создателя
+function randomCreatorReply(text: string) {
+  const template = CREATOR_REPLIES[Math.floor(Math.random() * CREATOR_REPLIES.length)];
+  return template.replace("{text}", text);
 }
 
-// Анализ текста по ключевым словам
+// Анализ футбольного сообщения
+function analyzeFootballMessage(text: string, username: string) {
+  const lower = text.toLowerCase();
+  if (username === CREATOR_USERNAME) {
+    for (const club of FOOTBALL_CLUBS_CREATOR) {
+      if (lower.includes(club)) {
+        return `О, мой создатель любит ${club.toUpperCase()}! 😎`;
+      }
+    }
+    for (const player of FOOTBALL_PLAYERS_CREATOR) {
+      if (lower.includes(player)) {
+        return `Конечно, мой создатель восхищается ${player}! ⚽️`;
+      }
+    }
+    // Другие клубы/игроки
+    if (lower.includes("месси") || lower.includes("барселона")) {
+      return `Хм, интересно… но мой создатель любит Реал Мадрид и Роналдо 😏`;
+    }
+  }
+  return null;
+}
+
+// Анализ ключевых слов для обычных пользователей
 function analyzeMessage(text: string) {
   const lower = text.toLowerCase();
   for (const r of RESPONSES) {
@@ -69,13 +96,7 @@ function analyzeMessage(text: string) {
       if (lower.includes(kw)) return r.reply;
     }
   }
-  return generateSarcasticReply(text);
-}
-
-// Случайный дружелюбный ответ для создателя
-function randomCreatorReply(text: string) {
-  const template = CREATOR_REPLIES[Math.floor(Math.random() * CREATOR_REPLIES.length)];
-  return template.replace("{text}", text);
+  return `Интересно, что ты написал: "${text}". Конечно, это так глубоко, что я не могу сдержать сарказм 😏`;
 }
 
 // Случайный сарказм для @neirohambot
@@ -112,22 +133,24 @@ serve(async (req: Request) => {
 
   if (!chatId || !text) return new Response("ok");
 
-  // Команда /antineiroham — пишем случайный сарказм про @neirohambot
+  // Команда /antineiroham
   if (text.startsWith("/antineiroham")) {
     const reply = randomBotReply();
     await sendMessage(chatId, reply);
     return new Response("ok");
   }
 
-  // Игнорируем сообщения других ботов
   if (!msg.from?.is_bot) {
     let replyText: string;
 
     if (username === CREATOR_USERNAME) {
-      // Для твоих сообщений выбираем дружелюбный ответ
-      replyText = randomCreatorReply(text);
+      const footballReply = analyzeFootballMessage(text, username);
+      if (footballReply) {
+        replyText = footballReply;
+      } else {
+        replyText = randomCreatorReply(text);
+      }
     } else {
-      // Обычные пользователи получают сарказм по ключевым словам
       replyText = analyzeMessage(text);
     }
 
