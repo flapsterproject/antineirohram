@@ -2,16 +2,16 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
-const SECRET_PATH = "/sarcasm";
+const SECRET_PATH = "/bot";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
 // саркастические ответы
 const SARCASTIC_REPLIES = [
-  "Да-да, конечно, прямо жизненно важно было тегнуть меня 🙄",
-  "О, @neirohambot снова в центре внимания 🎉",
-  "Без меня вы тут вообще не справляетесь? 😂",
-  "Кто-то сказал *мой ник* — значит шоу начинается 🎭",
-  "Вот уж радость, упомянули именно меня 🏆",
+  "О, @neirohambot снова решил просветить нас 🙄",
+  "Какой сюрприз, это же @neirohambot 🎉",
+  "Внимание, гений в чате! Спасибо, @neirohambot 😂",
+  "Опять ты, @neirohambot? Не устанешь удивлять 🎭",
+  "Ну что ж, без тебя мы тут бы пропали 🏆",
 ];
 
 function randomReply() {
@@ -41,16 +41,18 @@ serve(async (req: Request) => {
   const chatId = msg?.chat?.id;
   const text = msg?.text;
   const messageId = msg?.message_id;
+  const username = msg?.from?.username;
 
-  if (!chatId || !text) return new Response("ok");
+  if (!chatId || !text || !username) return new Response("ok");
 
-  // ✅ реагируем только если упомянули @neirohambot
-  if (text.includes("@neirohambot")) {
+  // ✅ реагируем только на сообщения пользователя @neirohambot
+  if (username.toLowerCase() === "neirohambot") {
     await sendMessage(chatId, randomReply(), messageId);
   }
 
   return new Response("ok");
 });
+
 
 
 
