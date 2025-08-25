@@ -4,13 +4,10 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 const kv = await Deno.openKv();
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
-const SECRET_PATH = "/sarcasm"; // change this
+const SECRET_PATH = "/sarcasm"; // webhook path
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-// 👇 ID бота @neirohambot (нужно заменить на реальный)
-const BAD_BOT_ID = 123456789;
-
-// Саркастические ответы
+// Sarcastic replies
 const sarcasticReplies = [
   "О, наш любимый оратор снова в деле 😏",
   "Без тебя тут так скучно было бы 😂",
@@ -38,13 +35,13 @@ serve(async (req: Request) => {
   const callbackQuery = update.callback_query;
   const chatId = message?.chat?.id || callbackQuery?.message?.chat?.id;
   const text = message?.text;
-  const fromId = message?.from?.id;
+  const fromUser = message?.from;
   const messageId = callbackQuery?.message?.message_id;
 
   if (!chatId) return new Response("No chat ID", { status: 200 });
 
-  // 👉 реагируем только на сообщения от плохого бота
-  if (fromId === BAD_BOT_ID && text) {
+  // ✅ React only if it's @neirohambot and it's really a bot
+  if (fromUser?.is_bot && fromUser?.username?.toLowerCase() === "neirohambot" && text) {
     const reply = getRandomReply();
 
     await fetch(`${TELEGRAM_API}/sendMessage`, {
@@ -58,7 +55,7 @@ serve(async (req: Request) => {
     });
   }
 
-  // Ответ на callback_query (чтобы не висел "loading")
+  // Answer callback query if exists
   if (callbackQuery) {
     await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
       method: "POST",
