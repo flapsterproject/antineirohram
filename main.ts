@@ -1,11 +1,16 @@
 // main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const TOKEN = Deno.env.get("BOT_TOKEN"); // токен бота из переменных окружения
-const SECRET_PATH = "/sarcasm"; // путь для вебхука
+const kv = await Deno.openKv();
+
+const TOKEN = Deno.env.get("BOT_TOKEN");
+const SECRET_PATH = "/sarcasm"; // change this
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-// Набор саркастических фраз
+// 👇 ID бота @neirohambot (нужно заменить на реальный)
+const BAD_BOT_ID = 123456789;
+
+// Саркастические ответы
 const sarcasticReplies = [
   "О, наш любимый оратор снова в деле 😏",
   "Без тебя тут так скучно было бы 😂",
@@ -15,15 +20,11 @@ const sarcasticReplies = [
   "Лучше бы ты книгу написал 📖",
   "Ну всё, пошёл записывать это в цитатник 😬",
 ];
-
-function getRandomReply() {
-  return sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
-}
+const getRandomReply = () =>
+  sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
 
 serve(async (req: Request) => {
   const { pathname } = new URL(req.url);
-
-  // проверяем секретный путь
   if (pathname !== SECRET_PATH) {
     return new Response("Bot is running.", { status: 200 });
   }
@@ -34,13 +35,16 @@ serve(async (req: Request) => {
 
   const update = await req.json();
   const message = update.message;
-  const chatId = message?.chat?.id;
-  const username = message?.from?.username;
+  const callbackQuery = update.callback_query;
+  const chatId = message?.chat?.id || callbackQuery?.message?.chat?.id;
+  const text = message?.text;
+  const fromId = message?.from?.id;
+  const messageId = callbackQuery?.message?.message_id;
 
-  if (!chatId || !username) return new Response("No chat ID or username", { status: 200 });
+  if (!chatId) return new Response("No chat ID", { status: 200 });
 
-  // реагируем только на @neirohambot
-  if (username === "neirohambot" && message.text) {
+  // 👉 реагируем только на сообщения от плохого бота
+  if (fromId === BAD_BOT_ID && text) {
     const reply = getRandomReply();
 
     await fetch(`${TELEGRAM_API}/sendMessage`, {
@@ -50,6 +54,17 @@ serve(async (req: Request) => {
         chat_id: chatId,
         text: reply,
         reply_to_message_id: message.message_id,
+      }),
+    });
+  }
+
+  // Ответ на callback_query (чтобы не висел "loading")
+  if (callbackQuery) {
+    await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        callback_query_id: callbackQuery.id,
       }),
     });
   }
