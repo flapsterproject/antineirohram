@@ -9,19 +9,24 @@ const SECRET_PATH = "/sarcasm";
 
 // Саркастические шаблоны
 const sarcasticReplies = [
-  (text: string) => `Ого, @neirohambot пишет: "${text}"… ну что ж, шедевр! 😏`,
-  (text: string) => `Внимание всем! @neirohambot сказал: "${text}" 🙄`,
-  (text: string) => `Браво, @neirohambot, ваш вклад в беседу: "${text}" 🤨`,
-  (text: string) => `"${text}" — так говорил @neirohambot. Истинная мудрость! 😂`,
+  (text: string) => `Интересно, ты написал: "${text}" 😏`,
+  (text: string) => `Ого, серьезно? "${text}" 🙄`,
+  (text: string) => `Ну конечно, "${text}" — это гениально 😂`,
+  (text: string) => `"${text}" — ну что ж, спасибо за информацию 😅`,
 ];
 
-// Функция отправки сообщения
-async function sendMessage(chatId: number, text: string) {
+// Функция отправки ответа
+async function sendMessage(chatId: number, text: string, replyToMessageId?: number) {
   const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      reply_to_message_id: replyToMessageId,
+    }),
   });
+
   const data = await res.json();
   if (!data.ok) console.error("SendMessage error:", data);
 }
@@ -35,27 +40,19 @@ serve(async (req: Request) => {
   let update;
   try {
     update = await req.json();
-  } catch (err) {
-    console.error("Invalid JSON", err);
+  } catch {
     return new Response("Invalid JSON", { status: 400 });
   }
 
   const message = update.message;
-  if (!message) return new Response("No message", { status: 200 });
+  if (!message || !message.text) return new Response("No message", { status: 200 });
 
-  const chatId = message.chat?.id;
-  const text = message.text;
+  const chatId = message.chat.id;
+  const replyFunc = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
+  const replyText = replyFunc(message.text);
 
-  if (!chatId || !text) return new Response("No chat ID or text", { status: 200 });
-
-  // Реакция только на @neirohambot
-  if (message.from?.username === "neirohambot") {
-    const replyFunc = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
-    const replyText = replyFunc(text);
-    await sendMessage(chatId, replyText);
-  }
+  // Отвечаем на сообщение
+  await sendMessage(chatId, replyText, message.message_id);
 
   return new Response("OK", { status: 200 });
 });
-
-
