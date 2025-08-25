@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const TOKEN = Deno.env.get("BOT_TOKEN"); // твой токен бота
+const TOKEN = Deno.env.get("BOT_TOKEN"); // твой токен
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const SECRET_PATH = "/sarcasm"; // путь вебхука
 
@@ -13,17 +13,16 @@ async function sendMessage(chat_id: number, text: string) {
   });
 }
 
-// Саркастические ответы
+// Саркастические ответы, можно использовать шаблон с текстом @neirohambot
 const sarcasticReplies = [
-  "Ой, какой умный! 😏",
-  "Ну конечно, все вокруг виноваты, а ты нет 🤨",
-  "Спасибо за мудрый комментарий, профессор 🙄",
-  "Вау, это шедевр сарказма!",
+  (text: string) => `Ого, @neirohambot пишет: "${text}"… ну что ж, шедевр! 😏`,
+  (text: string) => `Внимание всем! @neirohambot сказал: "${text}" 🙄`,
+  (text: string) => `Браво, @neirohambot, ваш вклад в беседу: "${text}" 🤨`,
+  (text: string) => `"${text}" — так говорил @neirohambot. Истинная мудрость! 😂`,
 ];
 
 // Запуск сервера
 serve(async (req: Request) => {
-  // Проверяем путь
   const url = new URL(req.url);
   if (url.pathname !== SECRET_PATH) return new Response("Not Found", { status: 404 });
 
@@ -35,7 +34,9 @@ serve(async (req: Request) => {
 
     // Проверяем, что сообщение от @neirohambot
     if (message.from?.username === "neirohambot") {
-      const reply = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
+      const text = message.text || "";
+      const replyFunc = sarcasticReplies[Math.floor(Math.random() * sarcasticReplies.length)];
+      const reply = replyFunc(text);
       await sendMessage(chat_id, reply);
     }
   }
