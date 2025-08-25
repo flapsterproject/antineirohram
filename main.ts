@@ -2,11 +2,11 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
-const SECRET_PATH = "/sarcasm";
+const SECRET_PATH = "/bot";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
-const CREATOR_USERNAME = "amangeldimasakov"; // <- твой username без @
+const CREATOR_USERNAME = "твой_username"; // <- твой username без @
 
-// Обычные ключевые слова для пользователей
+// Ключевые слова для обычных пользователей
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро"], reply: "О, привет!" },
   { keywords: ["как дела", "как ты", "как настроение"], reply: "Как обычно — спасаю мир сарказмом 😏" },
@@ -54,11 +54,11 @@ const BOT_REPLIES = [
   "@neirohambot, не могу перестать удивляться твоему чувству юмора… или его отсутствию 😏",
 ];
 
-// Любимые клубы создателя (рус + англ)
+// Клубы
 const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
 const FOOTBALL_CLUBS_OTHER = ["барселона", "barcelona"];
 
-// Игроки создателя
+// Игроки
 const FOOTBALL_PLAYERS_CREATOR = ["роналдо", "cristiano ronaldo"];
 const FOOTBALL_PLAYERS_OTHER = [
   "месси", "lionel messi", "pele", "пеле",
@@ -75,10 +75,9 @@ function randomCreatorReply(text: string) {
   return template.replace("{text}", text);
 }
 
-// Анализ футбольного сообщения
+// Анализ футбола
 function analyzeFootballMessage(text: string, username: string) {
   const lower = text.toLowerCase();
-
   if (username === CREATOR_USERNAME) {
     for (const club of FOOTBALL_CLUBS_CREATOR) if (lower.includes(club)) return `О, мой создатель любит ${club.toUpperCase()}! 😎`;
     for (const player of FOOTBALL_PLAYERS_CREATOR) if (lower.includes(player)) return `Конечно, мой создатель восхищается ${player}! ⚽️`;
@@ -90,11 +89,10 @@ function analyzeFootballMessage(text: string, username: string) {
     for (const club of FOOTBALL_CLUBS_OTHER) if (lower.includes(club)) return `Барселона? 😅 Мой создатель всё равно любит Реал Мадрид 😎`;
     for (const player of FOOTBALL_PLAYERS_OTHER) if (lower.includes(player)) return `Хм… интересный выбор, но мой создатель любит Роналдо 😏`;
   }
-
   return null;
 }
 
-// Анализ обычных слов для пользователей
+// Анализ обычных слов
 function analyzeMessage(text: string) {
   const lower = text.toLowerCase();
   for (const r of RESPONSES) {
@@ -103,7 +101,7 @@ function analyzeMessage(text: string) {
   return `Интересно, что ты написал: "${text}". Наверное, я слишком умён, чтобы это понять 😏`;
 }
 
-// Случайный сарказм на @neirohambot
+// Сарказм на @neirohambot
 function randomBotReply() {
   return BOT_REPLIES[Math.floor(Math.random() * BOT_REPLIES.length)];
 }
@@ -114,6 +112,15 @@ async function sendMessage(chatId: number, text: string, replyTo?: number) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, reply_to_message_id: replyTo, parse_mode: "Markdown" }),
+  });
+}
+
+// Удаление сообщения
+async function deleteMessage(chatId: number, messageId: number) {
+  await fetch(`${TELEGRAM_API}/deleteMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId }),
   });
 }
 
@@ -136,6 +143,7 @@ serve(async (req: Request) => {
   if (text.startsWith("/antineiroham")) {
     const reply = randomBotReply();
     await sendMessage(chatId, reply);
+    await deleteMessage(chatId, messageId); // Удаляем команду
     return new Response("ok");
   }
 
