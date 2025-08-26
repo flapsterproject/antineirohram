@@ -5,7 +5,7 @@ const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov"; // <- твой username без @
-const TARGET_BOT_USERNAME = "neiroham";   // <- бот, на которого нужен сарказм
+const TARGET_BOT_USERNAME = "neirohambot";   // <- бот, на которого нужен сарказм
 
 // Ключевые слова для обычных пользователей
 const RESPONSES = [
@@ -51,7 +51,8 @@ const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
 const FOOTBALL_CLUBS_OTHER = ["барселона", "barcelona"];
 const FOOTBALL_PLAYERS_CREATOR = ["роналдо", "cristiano ronaldo"];
 const FOOTBALL_PLAYERS_OTHER = [
-  "месси", "lionel messi", "pele", "пеле",
+  "месси", "lionel messi",
+  "пеле", "pele",
   "диего марадонa", "diego maradona",
   "йохан кройф", "johan cruyff", "cruyff",
   "килиан мбаппе", "kylian mbappe", "mbappe",
@@ -124,20 +125,20 @@ serve(async (req: Request) => {
 
   if (!chatId || !text) return new Response("ok");
 
-  // если сообщение от @neirohambot → сразу сарказм
+  // ✅ Если сообщение от @neirohambot → сарказм
   if (username === TARGET_BOT_USERNAME) {
     await sendMessage(chatId, randomBotReply(), messageId);
     return new Response("ok");
   }
 
-  // команда /antineiroham
+  // ✅ Команда /antineiroham
   if (text.startsWith("/antineiroham")) {
     await sendMessage(chatId, randomBotReply());
     await deleteMessage(chatId, messageId);
     return new Response("ok");
   }
 
-  // обработка людей
+  // ✅ Обработка обычных пользователей и создателя
   let replyText: string;
   if (username === CREATOR_USERNAME) {
     const footballReply = analyzeFootballMessage(text, username);
@@ -151,4 +152,3 @@ serve(async (req: Request) => {
 
   return new Response("ok");
 });
-
