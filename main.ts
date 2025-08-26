@@ -4,9 +4,10 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
-const CREATOR_USERNAME = "amangeldimasakov"; // <-- замени на свой username без @
+const CREATOR_USERNAME = "amangeldimasakov"; // <- твой username без @
+const TARGET_BOT_USERNAME = "neirohambot";   // <- бот, на которого нужен сарказм
 
-// 🔹 Ключевые слова для обычных пользователей
+// Ключевые слова для обычных пользователей
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро"], reply: "О, привет!" },
   { keywords: ["как дела", "как ты", "как настроение"], reply: "Как обычно — спасаю мир сарказмом 😏" },
@@ -21,7 +22,7 @@ const RESPONSES = [
   { keywords: ["иди", "уйди", "отстань", "заткнись"], reply: "О, привет хамство! Я прям в восторге 🤡" },
 ];
 
-// 🔹 Дружелюбные ответы для создателя
+// Дружелюбные ответы для создателя
 const CREATOR_REPLIES = [
   "Привет, мой создатель! 😎 Как дела?",
   "Ого, ты написал: \"{text}\", мой создатель! 👑",
@@ -35,27 +36,22 @@ const CREATOR_REPLIES = [
   "Твой текст: \"{text}\" — настоящий шедевр, мой создатель 😏",
 ];
 
-// 🔹 Сарказм для @neirohambot
+// Сарказм для @neirohambot
 const BOT_REPLIES = [
-  "@neirohambot, я явно умнее тебя 🙄 Как вообще можно было додуматься до такой мысли?",
+  "@neirohambot, я явно умнее тебя 🙄",
   "@neirohambot, ты опять пытаешься меня превзойти? 😂",
-  "@neirohambot, слишком просто для меня 😎 Я бы на твоем месте подучился немного.",
-  "@neirohambot, спасибо за развлечение 🤡 Каждый твой пост – шедевр бессмысленности!",
+  "@neirohambot, спасибо за развлечение 🤡",
   "@neirohambot, твой интеллект поражает… в плохом смысле 😏",
-  "@neirohambot, очередное гениальное сообщение… для кота 😅",
   "@neirohambot, снова пытаешься блеснуть умом? Увы, не получилось 😏",
   "@neirohambot, интересно, а у тебя есть хоть одна идея без фейла? 😂",
-  "@neirohambot, я бы аплодировал, если бы это было смешно 😅",
 ];
 
-// 🔹 Клубы и игроки
+// Клубы и игроки
 const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
 const FOOTBALL_CLUBS_OTHER = ["барселона", "barcelona"];
-
 const FOOTBALL_PLAYERS_CREATOR = ["роналдо", "cristiano ronaldo"];
 const FOOTBALL_PLAYERS_OTHER = [
-  "месси", "lionel messi",
-  "пеле", "pele",
+  "месси", "lionel messi", "pele", "пеле",
   "диего марадонa", "diego maradona",
   "йохан кройф", "johan cruyff", "cruyff",
   "килиан мбаппе", "kylian mbappe", "mbappe",
@@ -63,7 +59,7 @@ const FOOTBALL_PLAYERS_OTHER = [
   "джуд беллингем", "jude bellingham", "bellingham"
 ];
 
-// 🔹 Функции
+// --- Функции ---
 function randomCreatorReply(text: string) {
   const template = CREATOR_REPLIES[Math.floor(Math.random() * CREATOR_REPLIES.length)];
   return template.replace("{text}", text);
@@ -74,13 +70,13 @@ function analyzeFootballMessage(text: string, username: string) {
   if (username === CREATOR_USERNAME) {
     for (const club of FOOTBALL_CLUBS_CREATOR) if (lower.includes(club)) return `О, мой создатель любит ${club.toUpperCase()}! 😎`;
     for (const player of FOOTBALL_PLAYERS_CREATOR) if (lower.includes(player)) return `Конечно, мой создатель восхищается ${player}! ⚽️`;
-    for (const club of FOOTBALL_CLUBS_OTHER) if (lower.includes(club)) return `Хм… но мой создатель всё равно любит Реал Мадрид 😏`;
-    for (const player of FOOTBALL_PLAYERS_OTHER) if (lower.includes(player)) return `Хм… но мой создатель всё равно восхищается Роналдо 😏`;
+    for (const club of FOOTBALL_CLUBS_OTHER) if (lower.includes(club)) return `Но мой создатель всё равно любит Реал Мадрид 😏`;
+    for (const player of FOOTBALL_PLAYERS_OTHER) if (lower.includes(player)) return `Но мой создатель всё равно восхищается Роналдо 😏`;
   } else {
     for (const club of FOOTBALL_CLUBS_CREATOR) if (lower.includes(club)) return `Ого, кто-то любит ${club.toUpperCase()} 😏`;
-    for (const player of FOOTBALL_PLAYERS_CREATOR) if (lower.includes(player)) return `Ага, ${player} хорош… но не лучше Роналдо 😎`;
-    for (const club of FOOTBALL_CLUBS_OTHER) if (lower.includes(club)) return `Барселона? 😅 Мой создатель всё равно любит Реал Мадрид 😎`;
-    for (const player of FOOTBALL_PLAYERS_OTHER) if (lower.includes(player)) return `Хм… интересный выбор, но мой создатель любит Роналдо 😏`;
+    for (const player of FOOTBALL_PLAYERS_CREATOR) if (lower.includes(player)) return `${player}? Хорош, но не лучше Роналдо 😎`;
+    for (const club of FOOTBALL_CLUBS_OTHER) if (lower.includes(club)) return `Барселона? 😅 Мой создатель всё равно за Реал Мадрид 😎`;
+    for (const player of FOOTBALL_PLAYERS_OTHER) if (lower.includes(player)) return `Интересный выбор, но мой создатель фанат Роналдо 😏`;
   }
   return null;
 }
@@ -90,7 +86,7 @@ function analyzeMessage(text: string) {
   for (const r of RESPONSES) {
     for (const kw of r.keywords) if (lower.includes(kw)) return r.reply;
   }
-  return `Интересно, что ты написал: "${text}". Наверное, я слишком умён, чтобы это понять 😏`;
+  return `Интересно, что ты написал: "${text}" 😏`;
 }
 
 function randomBotReply() {
@@ -101,7 +97,7 @@ async function sendMessage(chatId: number, text: string, replyTo?: number) {
   await fetch(`${TELEGRAM_API}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, reply_to_message_id: replyTo, parse_mode: "Markdown" }),
+    body: JSON.stringify({ chat_id: chatId, text, reply_to_message_id: replyTo }),
   });
 }
 
@@ -113,7 +109,7 @@ async function deleteMessage(chatId: number, messageId: number) {
   });
 }
 
-// 🔹 Webhook
+// --- Webhook ---
 serve(async (req: Request) => {
   const { pathname } = new URL(req.url);
   if (pathname !== SECRET_PATH) return new Response("ok");
@@ -128,35 +124,31 @@ serve(async (req: Request) => {
 
   if (!chatId || !text) return new Response("ok");
 
-  // ✅ Команда /antineiroham
+  // если сообщение от @neirohambot → сразу сарказм
+  if (username === TARGET_BOT_USERNAME) {
+    await sendMessage(chatId, randomBotReply(), messageId);
+    return new Response("ok");
+  }
+
+  // команда /antineiroham
   if (text.startsWith("/antineiroham")) {
-    const reply = randomBotReply();
-    await sendMessage(chatId, reply);
-    await deleteMessage(chatId, messageId); // удаляем команду
+    await sendMessage(chatId, randomBotReply());
+    await deleteMessage(chatId, messageId);
     return new Response("ok");
   }
 
-  // ✅ Если написал бот @neirohambot → сарказм
-  if (msg.from?.is_bot && username === "neirohambot") {
-    const reply = randomBotReply();
-    await sendMessage(chatId, reply);
-    return new Response("ok");
+  // обработка людей
+  let replyText: string;
+  if (username === CREATOR_USERNAME) {
+    const footballReply = analyzeFootballMessage(text, username);
+    replyText = footballReply ? footballReply : randomCreatorReply(text);
+  } else {
+    const footballReply = analyzeFootballMessage(text, username);
+    replyText = footballReply || analyzeMessage(text);
   }
 
-  // ✅ Ответы людям
-  if (!msg.from?.is_bot) {
-    let replyText: string;
-
-    if (username === CREATOR_USERNAME) {
-      const footballReply = analyzeFootballMessage(text, username);
-      replyText = footballReply ? footballReply : randomCreatorReply(text);
-    } else {
-      const footballReply = analyzeFootballMessage(text, username);
-      replyText = footballReply || analyzeMessage(text);
-    }
-
-    await sendMessage(chatId, replyText, messageId);
-  }
+  await sendMessage(chatId, replyText, messageId);
 
   return new Response("ok");
 });
+
