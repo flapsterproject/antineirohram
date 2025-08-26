@@ -147,6 +147,13 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
+  // ⚡ Авто-сарказм если написал @neirohambot
+  if (username === "neirohambot") {
+    const reply = randomBotReply();
+    await sendMessage(chatId, reply);
+    return new Response("ok");
+  }
+
   if (!msg.from?.is_bot) {
     let replyText: string;
 
