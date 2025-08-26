@@ -22,6 +22,7 @@ const RESPONSES = [
   { keywords: ["иди", "уйди", "отстань", "заткнись"], reply: "О, привет хамство! Я прям в восторге 🤡" },
 ];
 
+// --- Ответы для создателя ---
 const CREATOR_REPLIES = [
   "Привет, мой создатель! 😎 Как дела?",
   "Ого, ты написал: \"{text}\", мой создатель! 👑",
@@ -35,6 +36,7 @@ const CREATOR_REPLIES = [
   "Твой текст: \"{text}\" — настоящий шедевр, мой создатель 😏",
 ];
 
+// --- Сарказм на @neirohambot ---
 const BOT_REPLIES = [
   "@neirohambot, я явно умнее тебя 🙄",
   "@neirohambot, ты опять пытаешься меня превзойти? 😂",
@@ -44,6 +46,7 @@ const BOT_REPLIES = [
   "@neirohambot, интересно, а у тебя есть хоть одна идея без фейла? 😂",
 ];
 
+// --- Футбольные клубы и игроки ---
 const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
 const FOOTBALL_CLUBS_OTHER = ["барселона", "barcelona"];
 const FOOTBALL_PLAYERS_CREATOR = ["роналдо", "cristiano ronaldo"];
@@ -122,14 +125,20 @@ serve(async (req: Request) => {
 
   if (!chatId || !text) return new Response("ok");
 
-  // Команда /antineiroham
+  // --- Если сообщение от @neirohambot → сразу сарказм ---
+  if (username === TARGET_BOT_USERNAME) {
+    await sendMessage(chatId, randomBotReply(), messageId);
+    return new Response("ok");
+  }
+
+  // --- Команда /antineiroham ---
   if (text.startsWith("/antineiroham")) {
     await sendMessage(chatId, randomBotReply());
     await deleteMessage(chatId, messageId);
     return new Response("ok");
   }
 
-  // Ответ на сообщение
+  // --- Ответ обычных пользователей и создателя ---
   let replyText: string;
   if (username === CREATOR_USERNAME) {
     const footballReply = analyzeFootballMessage(text, username);
@@ -141,10 +150,10 @@ serve(async (req: Request) => {
 
   await sendMessage(chatId, replyText, messageId);
 
-  // Автоматический сарказм на @neirohambot после любого пользователя
-  if (username !== CREATOR_USERNAME) {
+  // --- Автосарказм на @neirohambot через 5 секунд для всех ---
+  setTimeout(async () => {
     await sendMessage(chatId, randomBotReply());
-  }
+  }, 5000);
 
   return new Response("ok");
 });
