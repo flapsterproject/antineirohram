@@ -122,12 +122,6 @@ serve(async (req: Request) => {
 
   if (!chatId || !text) return new Response("ok");
 
-  // Если сообщение от @neirohambot → сразу сарказм
-  if (username === TARGET_BOT_USERNAME) {
-    await sendMessage(chatId, randomBotReply(), messageId);
-    return new Response("ok");
-  }
-
   // Команда /antineiroham
   if (text.startsWith("/antineiroham")) {
     await sendMessage(chatId, randomBotReply());
@@ -135,7 +129,7 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
-  // Обработка обычных пользователей и создателя
+  // Ответ на сообщение
   let replyText: string;
   if (username === CREATOR_USERNAME) {
     const footballReply = analyzeFootballMessage(text, username);
@@ -147,11 +141,9 @@ serve(async (req: Request) => {
 
   await sendMessage(chatId, replyText, messageId);
 
-  // Автоматический вызов сарказма на @neirohambot через 5 секунд
+  // Автоматический сарказм на @neirohambot после любого пользователя
   if (username !== CREATOR_USERNAME) {
-    setTimeout(async () => {
-      await sendMessage(chatId, randomBotReply());
-    }, 5000);
+    await sendMessage(chatId, randomBotReply());
   }
 
   return new Response("ok");
