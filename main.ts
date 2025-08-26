@@ -4,9 +4,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
-const CREATOR_USERNAME = "amangeldimasakov"; // <- твой username без @
+const CREATOR_USERNAME = "amangeldimasakov"; // <-- замени на свой username без @
 
-// Ключевые слова для обычных пользователей
+// 🔹 Ключевые слова для обычных пользователей
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро"], reply: "О, привет!" },
   { keywords: ["как дела", "как ты", "как настроение"], reply: "Как обычно — спасаю мир сарказмом 😏" },
@@ -21,7 +21,7 @@ const RESPONSES = [
   { keywords: ["иди", "уйди", "отстань", "заткнись"], reply: "О, привет хамство! Я прям в восторге 🤡" },
 ];
 
-// Дружелюбные ответы для создателя
+// 🔹 Дружелюбные ответы для создателя
 const CREATOR_REPLIES = [
   "Привет, мой создатель! 😎 Как дела?",
   "Ого, ты написал: \"{text}\", мой создатель! 👑",
@@ -35,33 +35,27 @@ const CREATOR_REPLIES = [
   "Твой текст: \"{text}\" — настоящий шедевр, мой создатель 😏",
 ];
 
-// Сарказм для @neirohambot
+// 🔹 Сарказм для @neirohambot
 const BOT_REPLIES = [
   "@neirohambot, я явно умнее тебя 🙄 Как вообще можно было додуматься до такой мысли?",
-  "@neirohambot, ты опять пытаешься меня превзойти? 😂 Серьезно, это выглядит комично!",
-  "@neirohambot, слишком просто для меня 😎 Я бы на твоем месте подучился немного перед этим.",
+  "@neirohambot, ты опять пытаешься меня превзойти? 😂",
+  "@neirohambot, слишком просто для меня 😎 Я бы на твоем месте подучился немного.",
   "@neirohambot, спасибо за развлечение 🤡 Каждый твой пост – шедевр бессмысленности!",
-  "@neirohambot, ну кто же так думает? 🤔 Даже коты смеют!",
   "@neirohambot, твой интеллект поражает… в плохом смысле 😏",
   "@neirohambot, очередное гениальное сообщение… для кота 😅",
-  "@neirohambot, я бы назвал это искусством… если бы не было так скучно 😎",
   "@neirohambot, снова пытаешься блеснуть умом? Увы, не получилось 😏",
   "@neirohambot, интересно, а у тебя есть хоть одна идея без фейла? 😂",
-  "@neirohambot, твоя логика поражает… своей абсурдностью 🙃",
   "@neirohambot, я бы аплодировал, если бы это было смешно 😅",
-  "@neirohambot, ну ты опять на высоте… только не той, которая нужна 😏",
-  "@neirohambot, держи свои «гениальные мысли» при себе 😎",
-  "@neirohambot, не могу перестать удивляться твоему чувству юмора… или его отсутствию 😏",
 ];
 
-// Клубы
+// 🔹 Клубы и игроки
 const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
 const FOOTBALL_CLUBS_OTHER = ["барселона", "barcelona"];
 
-// Игроки
 const FOOTBALL_PLAYERS_CREATOR = ["роналдо", "cristiano ronaldo"];
 const FOOTBALL_PLAYERS_OTHER = [
-  "месси", "lionel messi", "pele", "пеле",
+  "месси", "lionel messi",
+  "пеле", "pele",
   "диего марадонa", "diego maradona",
   "йохан кройф", "johan cruyff", "cruyff",
   "килиан мбаппе", "kylian mbappe", "mbappe",
@@ -69,13 +63,12 @@ const FOOTBALL_PLAYERS_OTHER = [
   "джуд беллингем", "jude bellingham", "bellingham"
 ];
 
-// Дружелюбный ответ для создателя
+// 🔹 Функции
 function randomCreatorReply(text: string) {
   const template = CREATOR_REPLIES[Math.floor(Math.random() * CREATOR_REPLIES.length)];
   return template.replace("{text}", text);
 }
 
-// Анализ футбола
 function analyzeFootballMessage(text: string, username: string) {
   const lower = text.toLowerCase();
   if (username === CREATOR_USERNAME) {
@@ -92,7 +85,6 @@ function analyzeFootballMessage(text: string, username: string) {
   return null;
 }
 
-// Анализ обычных слов
 function analyzeMessage(text: string) {
   const lower = text.toLowerCase();
   for (const r of RESPONSES) {
@@ -101,12 +93,10 @@ function analyzeMessage(text: string) {
   return `Интересно, что ты написал: "${text}". Наверное, я слишком умён, чтобы это понять 😏`;
 }
 
-// Сарказм на @neirohambot
 function randomBotReply() {
   return BOT_REPLIES[Math.floor(Math.random() * BOT_REPLIES.length)];
 }
 
-// Отправка сообщения
 async function sendMessage(chatId: number, text: string, replyTo?: number) {
   await fetch(`${TELEGRAM_API}/sendMessage`, {
     method: "POST",
@@ -115,7 +105,6 @@ async function sendMessage(chatId: number, text: string, replyTo?: number) {
   });
 }
 
-// Удаление сообщения
 async function deleteMessage(chatId: number, messageId: number) {
   await fetch(`${TELEGRAM_API}/deleteMessage`, {
     method: "POST",
@@ -124,7 +113,7 @@ async function deleteMessage(chatId: number, messageId: number) {
   });
 }
 
-// Webhook
+// 🔹 Webhook
 serve(async (req: Request) => {
   const { pathname } = new URL(req.url);
   if (pathname !== SECRET_PATH) return new Response("ok");
@@ -139,21 +128,22 @@ serve(async (req: Request) => {
 
   if (!chatId || !text) return new Response("ok");
 
-  // Команда /antineiroham
+  // ✅ Команда /antineiroham
   if (text.startsWith("/antineiroham")) {
     const reply = randomBotReply();
     await sendMessage(chatId, reply);
-    await deleteMessage(chatId, messageId); // Удаляем команду
+    await deleteMessage(chatId, messageId); // удаляем команду
     return new Response("ok");
   }
 
-  // ⚡ Авто-сарказм если написал @neirohambot
-  if (username === "neirohambot") {
+  // ✅ Если написал бот @neirohambot → сарказм
+  if (msg.from?.is_bot && username === "neirohambot") {
     const reply = randomBotReply();
     await sendMessage(chatId, reply);
     return new Response("ok");
   }
 
+  // ✅ Ответы людям
   if (!msg.from?.is_bot) {
     let replyText: string;
 
