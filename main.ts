@@ -150,10 +150,10 @@ serve(async (req: Request) => {
 
   await sendMessage(chatId, replyText, messageId);
 
-  // --- Автосарказм на @neirohambot через 5 секунд для всех ---
+  // --- Автосарказм на @neirohambot через 8 секунд для всех ---
   setTimeout(async () => {
     await sendMessage(chatId, randomBotReply());
-  }, 5000);
+  }, 8000); // 8 секунд
 
   return new Response("ok");
 });
