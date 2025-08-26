@@ -5,7 +5,7 @@ const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov"; // <- твой username без @
-const TARGET_BOT_USERNAME = "neirohambot";   // <- бот, на которого нужен сарказм
+const TARGET_BOT_USERNAME = "neiroham";   // <- бот, на которого нужен сарказм
 
 // Ключевые слова для обычных пользователей
 const RESPONSES = [
