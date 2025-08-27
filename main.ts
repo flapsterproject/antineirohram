@@ -199,6 +199,27 @@ function analyzeCreatorMessage(text: string) {
   return `Я слушаю тебя, мой создатель 👑`;
 }
 
+
+// --- Функции2 ---
+function randomArray(arr: string[]) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Простое безопасное вычисление математики
+function evaluateMathExpression(expr: string): string | null {
+  try {
+    // Разрешаем только числа, + - * / ^ ( )
+    if (!/^[0-9+\-*/^().\s]+$/.test(expr)) return null;
+    const safeExpr = expr.replace(/\^/g, "**");
+    const result = eval(safeExpr);
+    if (typeof result === "number" && !isNaN(result)) return result.toString();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+
 function analyzeFootballMessage(text: string, username: string) {
   const lower = text.toLowerCase();
   if (username === CREATOR_USERNAME) {
@@ -281,6 +302,21 @@ serve(async (req: Request) => {
   setTimeout(async () => {
     await sendMessage(chatId, randomBotReply());
   }, 8000);
+
+
+   let replyText: string;
+
+  // Проверяем команду /math
+  if (username === CREATOR_USERNAME && text.startsWith("/math")) {
+    const expr = text.replace("/math", "").trim();
+    const result = evaluateMathExpression(expr);
+    replyText = result ? `Решение: ${result} 😏` : "Невозможно вычислить 😅";
+  } else {
+    // Сарказм для остальных
+    replyText = `Интересно, что ты написал: "${text}" 😏`;
+  }
+
+  await sendMessage(chatId, replyText, messageId);
 
   return new Response("ok");
 });
