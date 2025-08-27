@@ -8,56 +8,6 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
-
-// --- Состояния для команд ---
-const mathSessions: Record<number, boolean> = {}; // chatId -> активна ли математическая сессия
-
-// --- Функция решения математических выражений ---
-function solveMath(expr: string): string {
-  try {
-    // Убираем все лишние символы, оставляем цифры и +-*/(). 
-    const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
-    // eslint-disable-next-line no-eval
-    const result = eval(sanitized); 
-    return `${expr} = ${result}`;
-  } catch {
-    return `Не удалось вычислить: "${expr}" 😅`;
-  }
-}
-
-// --- Обработка сообщений ---
-serve(async (req: Request) => {
-  const { pathname } = new URL(req.url);
-  if (pathname !== SECRET_PATH) return new Response("ok");
-  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
-
-  const update = await req.json();
-  const msg = update.message;
-  const chatId = msg?.chat?.id;
-  const messageId = msg?.message_id;
-  const text = msg?.text;
-  const username = msg?.from?.username;
-
-  if (!chatId || !text) return new Response("ok");
-
-  // --- Математика ---
-  if (username === CREATOR_USERNAME && text.toLowerCase().startsWith("math")) {
-    const expression = text.substring(4).trim(); // убираем слово "math"
-    if (expression.length === 0) {
-      await sendMessage(chatId, "Пожалуйста, напиши выражение после 'math' 😎", messageId);
-    } else {
-      const solution = solveMath(expression);
-      await sendMessage(chatId, solution, messageId);
-    }
-    return new Response("ok");
-  }
-
-  // ... остальная логика бота (сарказм, ответы, футбол и т.д.) ...
-});
-
-
-
-
 // --- Обычные ответы для пользователей (больше 50) ---
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро", "вечер"], reply: "Привет, рад видеть тебя 😏" },
@@ -288,6 +238,7 @@ async function deleteMessage(chatId: number, messageId: number) {
   });
 }
 
+
 // --- Webhook ---
 serve(async (req: Request) => {
   const { pathname } = new URL(req.url);
@@ -315,6 +266,23 @@ serve(async (req: Request) => {
     await sendMessage(chatId, randomBotReply()); // отвечаем сарказмом
     return new Response("ok");
   }
+
+
+
+   // --- Математика: если создатель пишет "math <выражение>" ---
+  if (username === CREATOR_USERNAME && text.toLowerCase().startsWith("math")) {
+    const expression = text.substring(4).trim(); // убираем слово "math"
+    if (expression.length === 0) {
+      await sendMessage(chatId, "Пожалуйста, напиши выражение после 'math' 😎", messageId);
+    } else {
+      const solution = solveMath(expression);
+      await sendMessage(chatId, solution, messageId);
+    }
+    return new Response("ok");
+  }
+
+
+
 
   // Ответ пользователю или создателю
   let replyText: string;
