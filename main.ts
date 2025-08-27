@@ -197,7 +197,7 @@ if (username === CREATOR_USERNAME) {
 } else {
   const footballReply = analyzeFootballMessage(text, username);
   replyText = footballReply || analyzeMessage(text);
-}
+};
 
 // --- Футбол ---
 const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
