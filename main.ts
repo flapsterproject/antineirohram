@@ -8,15 +8,10 @@ const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
 
-// --- Состояния для команд ---
-const mathSessions: Record<number, boolean> = {}; // chatId -> активна ли математическая сессия
-
 // --- Функция решения математических выражений ---
 function solveMath(expr: string): string {
   try {
-    // Простой и безопасный способ вычислить выражение
-    // Убираем все лишние символы, оставляем цифры и +-*/(). 
-    const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
+    const sanitized = expr.replace(/[^-()\d/*+.]/g, ""); // оставляем только цифры и операции
     // eslint-disable-next-line no-eval
     const result = eval(sanitized); 
     return `${expr} = ${result}`;
@@ -25,20 +20,23 @@ function solveMath(expr: string): string {
   }
 }
 
-// --- Обработка сообщений ---
-if (text.startsWith("/math") && username === CREATOR_USERNAME) {
-  mathSessions[chatId] = true; // активируем математическую сессию
-  await sendMessage(chatId, "Режим математики активирован! Отправь выражение, и я решу его 😎", messageId);
+// --- Внутри serve(async (req) => { ... }) ---
+// после получения chatId, messageId, text, username
+
+if (!chatId || !text) return new Response("ok");
+
+// --- Если сообщение начинается с "math " от создателя ---
+if (username === CREATOR_USERNAME && text.toLowerCase().startsWith("math ")) {
+  const expression = text.slice(5).trim(); // берём всё после "math "
+  if (expression) {
+    const solution = solveMath(expression);
+    await sendMessage(chatId, solution, messageId);
+  } else {
+    await sendMessage(chatId, "Пожалуйста, напиши выражение после 'math' 😎", messageId);
+  }
   return new Response("ok");
 }
 
-// --- Если создатель в математическом режиме ---
-if (username === CREATOR_USERNAME && mathSessions[chatId]) {
-  const solution = solveMath(text);
-  await sendMessage(chatId, solution, messageId);
-  mathSessions[chatId] = false; // выключаем режим после решения
-  return new Response("ok");
-}
 
 // --- Обычные ответы для пользователей (больше 50) ---
 const RESPONSES = [
