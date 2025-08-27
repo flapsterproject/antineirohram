@@ -199,27 +199,6 @@ function analyzeCreatorMessage(text: string) {
   return `Я слушаю тебя, мой создатель 👑`;
 }
 
-
-// --- Функции2 ---
-function randomArray(arr: string[]) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-// Простое безопасное вычисление математики
-function evaluateMathExpression(expr: string): string | null {
-  try {
-    // Разрешаем только числа, + - * / ^ ( )
-    if (!/^[0-9+\-*/^().\s]+$/.test(expr)) return null;
-    const safeExpr = expr.replace(/\^/g, "**");
-    const result = eval(safeExpr);
-    if (typeof result === "number" && !isNaN(result)) return result.toString();
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-
 function analyzeFootballMessage(text: string, username: string) {
   const lower = text.toLowerCase();
   if (username === CREATOR_USERNAME) {
@@ -286,6 +265,46 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
+
+  function solveMath(expression: string): string {
+  try {
+    const result = Function(`"use strict"; return (${expression})`)();
+    return result.toString();
+  } catch {
+    return "Ошибка в математическом выражении!";
+  }
+}
+
+bot.command("math", async (ctx) => {
+  const username = ctx.from?.username;
+
+  // Проверяем username
+  if (username !== "amangeldimasakov") {
+    await ctx.reply("У вас нет прав использовать эту команду.", { reply_to_message_id: ctx.message.message_id });
+    return;
+  }
+
+  // Проверяем, что команда отправлена в группе
+  if (ctx.chat.type === "private") {
+    await ctx.reply("Эта команда работает только в группе.", { reply_to_message_id: ctx.message.message_id });
+    return;
+  }
+
+  const text = ctx.message.text;
+  const expression = text.replace("/math", "").trim();
+
+  if (!expression) {
+    await ctx.reply("Пожалуйста, укажите математическое выражение после команды.", { reply_to_message_id: ctx.message.message_id });
+    return;
+  }
+
+  const answer = solveMath(expression);
+  await ctx.reply(`Ответ: ${answer}`, { reply_to_message_id: ctx.message.message_id });
+});
+
+bot.start();
+console.log("Бот запущен в группе!");
+
   // Ответ пользователю или создателю
   let replyText: string;
   if (username === CREATOR_USERNAME) {
@@ -302,21 +321,6 @@ serve(async (req: Request) => {
   setTimeout(async () => {
     await sendMessage(chatId, randomBotReply());
   }, 8000);
-
-
-   let replyText: string;
-
-  // Проверяем команду /math
-  if (username === CREATOR_USERNAME && text.startsWith("/math")) {
-    const expr = text.replace("/math", "").trim();
-    const result = evaluateMathExpression(expr);
-    replyText = result ? `Решение: ${result} 😏` : "Невозможно вычислить 😅";
-  } else {
-    // Сарказм для остальных
-    replyText = `Интересно, что ты написал: "${text}" 😏`;
-  }
-
-  await sendMessage(chatId, replyText, messageId);
 
   return new Response("ok");
 });
