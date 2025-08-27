@@ -7,6 +7,39 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
+
+// --- Состояния для команд ---
+const mathSessions: Record<number, boolean> = {}; // chatId -> активна ли математическая сессия
+
+// --- Функция решения математических выражений ---
+function solveMath(expr: string): string {
+  try {
+    // Простой и безопасный способ вычислить выражение
+    // Убираем все лишние символы, оставляем цифры и +-*/(). 
+    const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
+    // eslint-disable-next-line no-eval
+    const result = eval(sanitized); 
+    return `${expr} = ${result}`;
+  } catch {
+    return `Не удалось вычислить: "${expr}" 😅`;
+  }
+}
+
+// --- Обработка сообщений ---
+if (text.startsWith("/math") && username === CREATOR_USERNAME) {
+  mathSessions[chatId] = true; // активируем математическую сессию
+  await sendMessage(chatId, "Режим математики активирован! Отправь выражение, и я решу его 😎", messageId);
+  return new Response("ok");
+}
+
+// --- Если создатель в математическом режиме ---
+if (username === CREATOR_USERNAME && mathSessions[chatId]) {
+  const solution = solveMath(text);
+  await sendMessage(chatId, solution, messageId);
+  mathSessions[chatId] = false; // выключаем режим после решения
+  return new Response("ok");
+}
+
 // --- Обычные ответы для пользователей (больше 50) ---
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро", "вечер"], reply: "Привет, рад видеть тебя 😏" },
