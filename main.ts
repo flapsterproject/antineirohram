@@ -7,22 +7,6 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
-// --- Хранилище математических сессий (по пользователю в чате) ---
-const mathSessions: Record<string, boolean> = {}; // ключ: `${chatId}:${userId}`
-
-// --- Простая функция решения математических выражений ---
-function solveMath(expr: string): string {
-  try {
-    const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
-    // eslint-disable-next-line no-eval
-    const result = eval(sanitized);
-    return `${expr} = ${result}`;
-  } catch {
-    return `Не удалось вычислить: "${expr}" 😅`;
-  }
-}
-
-
 
 // --- Обычные ответы для пользователей (больше 50) ---
 const RESPONSES = [
@@ -296,21 +280,6 @@ serve(async (req: Request) => {
 
   await sendMessage(chatId, replyText, messageId);
 
-
-  // --- Команда /math ---
-  if (text.toLowerCase().startsWith("/math")) {
-    mathSessions[sessionKey] = true;
-    await sendMessage(chatId, "Режим математики активирован! Напиши пример, и я решу его 😎", messageId);
-    return new Response("ok");
-  }
-
-  // --- Математическая сессия ---
-  if (mathSessions[sessionKey]) {
-    const solution = solveMath(text);
-    await sendMessage(chatId, solution, messageId);
-    mathSessions[sessionKey] = false; // выключаем сессию
-    return new Response("ok");
-  }
 
   // Автосарказм через 8 секунд
   setTimeout(async () => {
