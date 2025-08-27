@@ -1,5 +1,6 @@
 // main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import math
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const SECRET_PATH = "/sarcasm";
@@ -8,10 +9,14 @@ const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
 
+// --- Состояния для команд ---
+const mathSessions: Record<number, boolean> = {}; // chatId -> активна ли математическая сессия
+
 // --- Функция решения математических выражений ---
 function solveMath(expr: string): string {
   try {
-    const sanitized = expr.replace(/[^-()\d/*+.]/g, ""); // оставляем только цифры и операции
+    // Убираем все лишние символы, оставляем цифры и +-*/(). 
+    const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
     // eslint-disable-next-line no-eval
     const result = eval(sanitized); 
     return `${expr} = ${result}`;
@@ -20,22 +25,37 @@ function solveMath(expr: string): string {
   }
 }
 
-// --- Внутри serve(async (req) => { ... }) ---
-// после получения chatId, messageId, text, username
+// --- Обработка сообщений ---
+serve(async (req: Request) => {
+  const { pathname } = new URL(req.url);
+  if (pathname !== SECRET_PATH) return new Response("ok");
+  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-if (!chatId || !text) return new Response("ok");
+  const update = await req.json();
+  const msg = update.message;
+  const chatId = msg?.chat?.id;
+  const messageId = msg?.message_id;
+  const text = msg?.text;
+  const username = msg?.from?.username;
 
-// --- Если сообщение начинается с "math " от создателя ---
-if (username === CREATOR_USERNAME && text.toLowerCase().startsWith("math ")) {
-  const expression = text.slice(5).trim(); // берём всё после "math "
-  if (expression) {
-    const solution = solveMath(expression);
-    await sendMessage(chatId, solution, messageId);
-  } else {
-    await sendMessage(chatId, "Пожалуйста, напиши выражение после 'math' 😎", messageId);
+  if (!chatId || !text) return new Response("ok");
+
+  // --- Математика ---
+  if (username === CREATOR_USERNAME && text.toLowerCase().startsWith("math")) {
+    const expression = text.substring(4).trim(); // убираем слово "math"
+    if (expression.length === 0) {
+      await sendMessage(chatId, "Пожалуйста, напиши выражение после 'math' 😎", messageId);
+    } else {
+      const solution = solveMath(expression);
+      await sendMessage(chatId, solution, messageId);
+    }
+    return new Response("ok");
   }
-  return new Response("ok");
-}
+
+  // ... остальная логика бота (сарказм, ответы, футбол и т.д.) ...
+});
+
+
 
 
 // --- Обычные ответы для пользователей (больше 50) ---
