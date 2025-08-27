@@ -1,4 +1,3 @@
-// main.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
@@ -7,13 +6,10 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
+// --- Хранилище математических сессий (по пользователю в чате) ---
+const mathSessions: Record<string, boolean> = {}; // ключ: `${chatId}:${userId}`
 
-
-// --- Состояния для математических сессий ---
-// ключ = `${chatId}:${userId}`
-const mathSessions: Record<string, boolean> = {};
-
-// --- Функция решения математических выражений ---
+// --- Простая функция решения математических выражений ---
 function solveMath(expr: string): string {
   try {
     const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
@@ -23,6 +19,22 @@ function solveMath(expr: string): string {
   } catch {
     return `Не удалось вычислить: "${expr}" 😅`;
   }
+}
+
+// --- Обычные ответы (можно расширять) ---
+const RESPONSES = [
+  { keywords: ["привет"], reply: "Привет 😏" },
+  { keywords: ["как дела"], reply: "Как обычно — сарказм спасает этот мир 🙃" },
+  { keywords: ["шутка"], reply: "Хаха, смешно 😏" },
+];
+
+// --- Функция отправки сообщений ---
+async function sendMessage(chatId: number, text: string, replyTo?: number) {
+  await fetch(`${TELEGRAM_API}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, reply_to_message_id: replyTo }),
+  });
 }
 
 // --- Webhook ---
@@ -45,16 +57,16 @@ serve(async (req: Request) => {
 
   // --- Команда /math ---
   if (text.toLowerCase().startsWith("/math")) {
-    mathSessions[sessionKey] = true; // активируем сессию для этого пользователя
-    await sendMessage(chatId, "Напиши пример, и я его решу 😎", messageId);
+    mathSessions[sessionKey] = true;
+    await sendMessage(chatId, "Режим математики активирован! Напиши пример, и я решу его 😎", messageId);
     return new Response("ok");
   }
 
-  // --- Если пользователь в математическом режиме ---
+  // --- Математическая сессия ---
   if (mathSessions[sessionKey]) {
     const solution = solveMath(text);
     await sendMessage(chatId, solution, messageId);
-    mathSessions[sessionKey] = false; // выключаем режим после решения
+    mathSessions[sessionKey] = false; // выключаем сессию
     return new Response("ok");
   }
 
@@ -68,3 +80,4 @@ serve(async (req: Request) => {
 
   return new Response("ok");
 });
+
