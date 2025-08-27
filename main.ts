@@ -211,19 +211,6 @@ function analyzeFootballMessage(text: string, username: string) {
   return null;
 }
 
-// Простая проверка и вычисление математических выражений
-function evaluateMathExpression(expr: string): string | null {
-  try {
-    if (!/^[0-9+\-*/^().\s]+$/.test(expr)) return null;
-    const safeExpr = expr.replace(/\^/g, "**");
-    const result = eval(safeExpr);
-    if (typeof result === "number" && !isNaN(result)) return result.toString();
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 function analyzeMessage(text: string) {
   const lower = text.toLowerCase();
   for (const r of RESPONSES) {
@@ -277,18 +264,6 @@ serve(async (req: Request) => {
     await sendMessage(chatId, randomBotReply()); // отвечаем сарказмом
     return new Response("ok");
   }
-
-  // Математика только для создателя
-  let replyText: string;
-  if (username === CREATOR_USERNAME) {
-    const mathResult = evaluateMathExpression(text);
-    replyText = mathResult ? `Решение: ${mathResult} 😏` : analyzeMessage(text);
-  } else {
-    replyText = analyzeMessage(text);
-  }
-
-  await sendMessage(chatId, replyText, messageId);
-
 
   // Ответ пользователю или создателю
   let replyText: string;
