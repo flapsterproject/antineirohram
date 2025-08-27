@@ -8,6 +8,12 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
+
+
+// --- Состояния для команд ---
+const mathSessions: Record<number, boolean> = {}; // chatId -> активна ли математическая сессия
+
+
 // --- Обычные ответы для пользователей (больше 50) ---
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро", "вечер"], reply: "Привет, рад видеть тебя 😏" },
@@ -200,6 +206,9 @@ function analyzeCreatorMessage(text: string) {
   return `Я слушаю тебя, мой создатель 👑`;
 }
 
+
+
+
 function analyzeFootballMessage(text: string, username: string) {
   const lower = text.toLowerCase();
   if (username === CREATOR_USERNAME) {
@@ -268,16 +277,17 @@ serve(async (req: Request) => {
   }
 
 
+ // --- Математический режим ---
+  if (text.toLowerCase().startsWith("/math") && username === CREATOR_USERNAME) {
+    mathSessions[chatId] = true;
+    await sendMessage(chatId, "Режим математики активирован! Отправь выражение 😎", messageId);
+    return new Response("ok");
+  }
 
-   // --- Математика: если создатель пишет "math <выражение>" ---
-  if (username === CREATOR_USERNAME && text.toLowerCase().startsWith("math")) {
-    const expression = text.substring(4).trim(); // убираем слово "math"
-    if (expression.length === 0) {
-      await sendMessage(chatId, "Пожалуйста, напиши выражение после 'math' 😎", messageId);
-    } else {
-      const solution = solveMath(expression);
-      await sendMessage(chatId, solution, messageId);
-    }
+  if (username === CREATOR_USERNAME && mathSessions[chatId]) {
+    const solution = solveMath(text);
+    await sendMessage(chatId, solution, messageId);
+    mathSessions[chatId] = false; // выключаем режим после решения
     return new Response("ok");
   }
 
