@@ -182,23 +182,6 @@ const BOT_REPLIES = [
   "@neirohambot, твои слова звучат как радио без станции 📻"
 ];
 
-// Ответ пользователю или создателю
-let replyText: string;
-
-if (username === CREATOR_USERNAME) {
-  // Проверяем, является ли текст математическим выражением
-  const mathResult = evaluateMathExpression(text);
-  if (mathResult !== null) {
-    replyText = `Решение: ${mathResult} 😏`;
-  } else {
-    const footballReply = analyzeFootballMessage(text, username);
-    replyText = footballReply ? footballReply : analyzeCreatorMessage(text);
-  }
-} else {
-  const footballReply = analyzeFootballMessage(text, username);
-  replyText = footballReply || analyzeMessage(text);
-};
-
 // --- Футбол ---
 const FOOTBALL_CLUBS_CREATOR = ["реал мадрид", "real madrid"];
 const FOOTBALL_CLUBS_OTHER = ["барселона", "barcelona"];
@@ -281,6 +264,25 @@ serve(async (req: Request) => {
     await sendMessage(chatId, randomBotReply()); // отвечаем сарказмом
     return new Response("ok");
   }
+  
+  // Ответ пользователю или создателю
+  let replyText: string;
+
+  if (username === CREATOR_USERNAME) {
+    const mathResult = evaluateMathExpression(text);
+    if (mathResult !== null) {
+      replyText = `Решение: ${mathResult} 😏`;
+    } else {
+      const footballReply = analyzeFootballMessage(text, username);
+      replyText = footballReply ? footballReply : analyzeCreatorMessage(text);
+    }
+  } else {
+    const footballReply = analyzeFootballMessage(text, username);
+    replyText = footballReply || analyzeMessage(text);
+  }
+
+  await sendMessage(chatId, replyText, messageId);
+
 
   // Ответ пользователю или создателю
   let replyText: string;
