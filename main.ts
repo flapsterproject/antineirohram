@@ -8,6 +8,43 @@ const CREATOR_USERNAME = "amangeldimasakov";
 const TARGET_BOT_USERNAME = "neirohambot";
 
 
+// --- Добавляем в начало, после объявления констант ---
+const mathSessions: Record<string, boolean> = {}; // ключ: `${chatId}:${userId}`
+
+// --- Функция решения математических выражений ---
+function solveMath(expr: string): string {
+  try {
+    const sanitized = expr.replace(/[^-()\d/*+.]/g, "");
+    // eslint-disable-next-line no-eval
+    const result = eval(sanitized);
+    return `${expr} = ${result}`;
+  } catch {
+    return `Не удалось вычислить: "${expr}" 😅`;
+  }
+}
+
+// --- Внутри serve, сразу после проверки chatId и text ---
+const userId = msg?.from?.id;
+if (!userId) return new Response("ok");
+
+const sessionKey = `${chatId}:${userId}`;
+
+// --- Обработка команды /math ---
+if (text.toLowerCase().startsWith("/math")) {
+  mathSessions[sessionKey] = true;
+  await sendMessage(chatId, "Режим математики активирован! Напиши пример, и я решу его 😎", messageId);
+  return new Response("ok");
+}
+
+// --- Если пользователь находится в математической сессии ---
+if (mathSessions[sessionKey]) {
+  const solution = solveMath(text);
+  await sendMessage(chatId, solution, messageId);
+  mathSessions[sessionKey] = false; // выключаем сессию после решения
+  return new Response("ok");
+}
+
+
 // --- Обычные ответы для пользователей (больше 50) ---
 const RESPONSES = [
   { keywords: ["привет", "здравствуйте", "хай", "добрый день", "доброе утро", "вечер"], reply: "Привет, рад видеть тебя 😏" },
