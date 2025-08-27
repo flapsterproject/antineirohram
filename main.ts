@@ -297,7 +297,7 @@ serve(async (req: Request) => {
     }
   }
   // Команда /antineiroham
-  if (text.startsWith("/antineiroham")) {
+  if (text.startsWith("/sarcasm")) {
     await deleteMessage(chatId, messageId); // удаляем команду
     await sendMessage(chatId, randomBotReply()); // отвечаем сарказмом
     return new Response("ok");
