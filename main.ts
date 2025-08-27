@@ -289,13 +289,7 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
-  // --- Обычные ответы ---
-  for (const r of RESPONSES) {
-    if (r.keywords.some(kw => text.toLowerCase().includes(kw))) {
-      await sendMessage(chatId, r.reply, messageId);
-      return new Response("ok");
-    }
-  }
+  
   // Команда /antineiroham
   if (text.startsWith("/sarcasm")) {
     await deleteMessage(chatId, messageId); // удаляем команду
@@ -303,8 +297,6 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
-  
-  
   // Автосарказм через 8 секунд
   setTimeout(async () => {
     await sendMessage(chatId, randomBotReply());
