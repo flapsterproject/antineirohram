@@ -265,46 +265,6 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
-
-  function solveMath(expression: string): string {
-  try {
-    const result = Function(`"use strict"; return (${expression})`)();
-    return result.toString();
-  } catch {
-    return "Ошибка в математическом выражении!";
-  }
-}
-
-bot.command("math", async (ctx) => {
-  const username = ctx.from?.username;
-
-  // Проверяем username
-  if (username !== "amangeldimasakov") {
-    await ctx.reply("У вас нет прав использовать эту команду.", { reply_to_message_id: ctx.message.message_id });
-    return;
-  }
-
-  // Проверяем, что команда отправлена в группе
-  if (ctx.chat.type === "private") {
-    await ctx.reply("Эта команда работает только в группе.", { reply_to_message_id: ctx.message.message_id });
-    return;
-  }
-
-  const text = ctx.message.text;
-  const expression = text.replace("/math", "").trim();
-
-  if (!expression) {
-    await ctx.reply("Пожалуйста, укажите математическое выражение после команды.", { reply_to_message_id: ctx.message.message_id });
-    return;
-  }
-
-  const answer = solveMath(expression);
-  await ctx.reply(`Ответ: ${answer}`, { reply_to_message_id: ctx.message.message_id });
-});
-
-bot.start();
-console.log("Бот запущен в группе!");
-
   // Ответ пользователю или создателю
   let replyText: string;
   if (username === CREATOR_USERNAME) {
