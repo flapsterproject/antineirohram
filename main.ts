@@ -56,6 +56,7 @@ const RESPONSES = [
   { keywords: ["салюты", "куку"], reply: "Салют! Готовься к сарказму 😏" },
   { keywords: ["хаю", "hi"], reply: "Hi! Ну что, сарказм наготове 😎" },
   { keywords: ["здарова", "эй"], reply: "Здарова! Сарказм уже ждёт 😏" }
+  { keywords: ["👍"], reply: "👍" }
 ];
 
 // --- Супер расширенный словарь для создателя ---
@@ -301,7 +302,7 @@ serve(async (req: Request) => {
 
   await sendMessage(chatId, replyText, messageId);
 
-  
+
   // Команда /antineiroham
   if (text.startsWith("/sarcasm")) {
     await deleteMessage(chatId, messageId); // удаляем команду
