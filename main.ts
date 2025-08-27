@@ -303,17 +303,7 @@ serve(async (req: Request) => {
     return new Response("ok");
   }
 
-  // Ответ пользователю или создателю
-  let replyText: string;
-  if (username === CREATOR_USERNAME) {
-    const footballReply = analyzeFootballMessage(text, username);
-    replyText = footballReply ? footballReply : analyzeCreatorMessage(text);
-  } else {
-    const footballReply = analyzeFootballMessage(text, username);
-    replyText = footballReply || analyzeMessage(text);
-  }
-
-  await sendMessage(chatId, replyText, messageId);
+  
   
   // Автосарказм через 8 секунд
   setTimeout(async () => {
