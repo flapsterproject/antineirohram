@@ -150,14 +150,14 @@ serve(async (req: Request) => {
     const linkRegex = /(https?:\/\/[^\s]+)/gi;
      
   
-    // ✅ Белый список ссылок
+   // ✅ Белый список (поддержка всех ссылок внутри канала/чата)
     const whitelist = [
-      "https://t.me/Happ_VPN_official",
-      "https://t.me/tmstars_chat",
+      /^https?:\/\/t\.me\/Happ_VPN_official/i,
+      /^https?:\/\/t\.me\/tmstars_chat/i,
     ];
-    for (const link of whitelist) {
-      if (text.includes(link)) {
-        return new Response("ok"); // разрешённая ссылка → ничего не делаем
+    for (const rule of whitelist) {
+      if (rule.test(text)) {
+        return new Response("ok"); // если ссылка совпадает с шаблоном — пропускаем
       }
     }
 
