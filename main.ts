@@ -24,10 +24,7 @@ async function sendMuteMessage(chatId: number, text: string, userId: number) {
       text,
       reply_markup: {
         inline_keyboard: [[
-          {
-            text: "🔓 Снять мут",
-            callback_data: `remove_mute_${userId}`
-          }
+          { text: "🔓 Снять мут", callback_data: `remove_mute_${userId}` }
         ]]
       }
     }),
@@ -150,38 +147,24 @@ serve(async (req: Request) => {
     const linkRegex = /(https?:\/\/[^\s]+)/gi;
 
     // --- Находим все ссылки в сообщении ---
-    const links = text.match(linkRegex) || [];
+    const links = (text.match(linkRegex) || []).map(l => l.trim());
     console.log("Найденные ссылки:", links);
 
-    // ✅ Белый список (регулярки, учитывает хвосты типа /123)
+    // ✅ Белый список (разрешаем хвосты)
     const whitelist = [
-      /^https?:\/\/t\.me\/Happ_VPN_official/i,
-      /^https?:\/\/t\.me\/tmstars_chat/i,
+      /^https?:\/\/t\.me\/Happ_VPN_official(\/.*)?$/i,
+      /^https?:\/\/t\.me\/tmstars_chat(\/.*)?$/i,
     ];
 
     // Если нет ссылок → ничего не делаем
-    if (links.length === 0) {
-      return new Response("ok");
-    }
+    if (links.length === 0) return new Response("ok");
 
-    // Проверяем, есть ли запрещённые ссылки
-    let hasBadLink = false;
-    for (const link of links) {
-      if (!whitelist.some(rule => rule.test(link))) {
-        hasBadLink = true;
-        break;
-      }
-    }
-
-    // Если все ссылки разрешённые → ничего не делаем
-    if (!hasBadLink) {
-      return new Response("ok");
-    }
+    // Если все ссылки разрешённые → пропускаем
+    const allWhitelisted = links.every(link => whitelist.some(rule => rule.test(link)));
+    if (allWhitelisted) return new Response("ok");
 
     // Есть хотя бы одна запрещённая ссылка
-    if (await isAdmin(chatId, userId)) {
-      return new Response("ok"); // админ → пропускаем
-    }
+    if (await isAdmin(chatId, userId)) return new Response("ok"); // админ → пропускаем
 
     // Обычный пользователь → удаляем и мутим
     await deleteMessage(chatId, messageId);
@@ -201,7 +184,6 @@ serve(async (req: Request) => {
 
     if (data.startsWith("remove_mute_")) {
       const targetId = parseInt(data.replace("remove_mute_", ""));
-
       if (await isAdmin(chatId, fromId)) {
         await unmuteUser(chatId, targetId);
         await sendMessage(chatId, `🔓 Мут пользователя снят админом.`);
