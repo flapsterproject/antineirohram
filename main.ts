@@ -150,19 +150,22 @@ serve(async (req: Request) => {
     const linkRegex = /(https?:\/\/[^\s]+)/gi;
      
   
-   // ✅ Белый список (поддержка всех ссылок внутри канала/чата)
+     // --- Находим все ссылки в сообщении ---
+    const links = text.match(linkRegex) || [];
+
+    // ✅ Белый список (регулярки для гибкости)
     const whitelist = [
       /^https?:\/\/t\.me\/Happ_VPN_official/i,
       /^https?:\/\/t\.me\/tmstars_chat/i,
     ];
-    for (const rule of whitelist) {
-      if (rule.test(text)) {
-        return new Response("ok"); // если ссылка совпадает с шаблоном — пропускаем
-      }
+
+    // Если все ссылки из whitelist → пропускаем
+    if (links.length > 0 && links.every(link => whitelist.some(rule => rule.test(link)))) {
+      return new Response("ok");
     }
 
-    // Проверяем наличие ссылок
-    if (linkRegex.test(text)) {
+    // Если есть ссылки, но они не из whitelist
+    if (links.length > 0) {
       // Проверяем админа
       if (await isAdmin(chatId, userId)) {
         return new Response("ok"); // админ → пропускаем
