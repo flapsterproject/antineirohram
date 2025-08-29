@@ -147,14 +147,18 @@ serve(async (req: Request) => {
     const messageId = update.message.message_id;
     const text = update.message.text;
 
-    const linkRegex = /(https?:\/\/[^\s]+)/gi;
-     
-        // ✅ Белый список ссылок
+        const linkRegex = /(https?:\/\/[^\s]+)/gi;
+
+    // ✅ Игнорируем сообщения от Telegram или ботов
+    if (update.message.from.is_bot || userId === 777000) {
+      return new Response("ok");
+    }
+
+    // ✅ Белый список ссылок
     const whitelist = [
       "https://t.me/Happ_VPN_official",
       "https://t.me/tmstars_chat"
     ];
-
     if (whitelist.some(link => text.includes(link))) {
       return new Response("ok");
     }
@@ -162,10 +166,9 @@ serve(async (req: Request) => {
     if (linkRegex.test(text)) {
       // Проверяем админа
       if (await isAdmin(chatId, userId)) {
-        // ⚠️ Админ → ничего не делаем
-        return new Response("ok");
+        return new Response("ok"); // админ → ничего не делаем
       }
-    
+
       // Обычный пользователь → удаляем и мутим
       await deleteMessage(chatId, messageId);
       await muteUser(chatId, userId);
