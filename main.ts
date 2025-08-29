@@ -148,38 +148,49 @@ serve(async (req: Request) => {
     const text = update.message.text;
 
     const linkRegex = /(https?:\/\/[^\s]+)/gi;
-     
-  
-     // --- Находим все ссылки в сообщении ---
-    const links = text.match(linkRegex) || [];
 
-    // ✅ Белый список (регулярки для гибкости)
+    // --- Находим все ссылки в сообщении ---
+    const links = text.match(linkRegex) || [];
+    console.log("Найденные ссылки:", links);
+
+    // ✅ Белый список (регулярки, учитывает хвосты типа /123)
     const whitelist = [
       /^https?:\/\/t\.me\/Happ_VPN_official/i,
       /^https?:\/\/t\.me\/tmstars_chat/i,
     ];
 
-    // Если все ссылки из whitelist → пропускаем
-    if (links.length > 0 && links.every(link => whitelist.some(rule => rule.test(link)))) {
+    // Если нет ссылок → ничего не делаем
+    if (links.length === 0) {
       return new Response("ok");
     }
 
-    // Если есть ссылки, но они не из whitelist
-    if (links.length > 0) {
-      // Проверяем админа
-      if (await isAdmin(chatId, userId)) {
-        return new Response("ok"); // админ → пропускаем
+    // Проверяем, есть ли запрещённые ссылки
+    let hasBadLink = false;
+    for (const link of links) {
+      if (!whitelist.some(rule => rule.test(link))) {
+        hasBadLink = true;
+        break;
       }
-
-      // Обычный пользователь → удаляем и мутим
-      await deleteMessage(chatId, messageId);
-      await muteUser(chatId, userId);
-      await sendMuteMessage(
-        chatId,
-        `🤐 ${userName} получил мут на 24 часа за спам.`,
-        userId
-      );
     }
+
+    // Если все ссылки разрешённые → ничего не делаем
+    if (!hasBadLink) {
+      return new Response("ok");
+    }
+
+    // Есть хотя бы одна запрещённая ссылка
+    if (await isAdmin(chatId, userId)) {
+      return new Response("ok"); // админ → пропускаем
+    }
+
+    // Обычный пользователь → удаляем и мутим
+    await deleteMessage(chatId, messageId);
+    await muteUser(chatId, userId);
+    await sendMuteMessage(
+      chatId,
+      `🤐 ${userName} получил мут на 24 часа за спам.`,
+      userId
+    );
   }
 
   // Обработка кнопки "Снять мут"
@@ -203,5 +214,6 @@ serve(async (req: Request) => {
 
   return new Response("ok");
 });
+
 
 
