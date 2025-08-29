@@ -149,12 +149,15 @@ serve(async (req: Request) => {
 
     const linkRegex = /(https?:\/\/[^\s]+)/gi;
      
-     if (linkRegex.test(text)) {
-    // ✅ Игнорируем сообщения от Telegram или ботов
-    if (update.message.from.is_bot || userId === 777000) {
+        // ✅ Белый список ссылок
+    const whitelist = [
+      "https://t.me/Happ_VPN_official",
+      "https://t.me/tmstars_chat"
+    ];
+
+    if (whitelist.some(link => text.includes(link))) {
       return new Response("ok");
     }
-
 
     if (linkRegex.test(text)) {
       // Проверяем админа
@@ -171,10 +174,9 @@ serve(async (req: Request) => {
         `🤐 ${userName} получил мут на 24 часа за спам.`,
         userId
       );
-      }
     }
   }
-  
+
   // Обработка кнопки "Снять мут"
   if (update.callback_query) {
     const chatId = update.callback_query.message.chat.id;
