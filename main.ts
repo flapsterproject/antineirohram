@@ -153,7 +153,7 @@ serve(async (req: Request) => {
     // ✅ Игнорируем сообщения от Telegram или ботов
     if (update.message.from.is_bot || userId === 777000) {
       return new Response("ok");
-    }}
+    }
 
 
     if (linkRegex.test(text)) {
@@ -171,9 +171,10 @@ serve(async (req: Request) => {
         `🤐 ${userName} получил мут на 24 часа за спам.`,
         userId
       );
+      }
     }
   }
-
+  
   // Обработка кнопки "Снять мут"
   if (update.callback_query) {
     const chatId = update.callback_query.message.chat.id;
