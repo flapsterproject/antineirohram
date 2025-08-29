@@ -146,27 +146,36 @@ serve(async (req: Request) => {
 
     const linkRegex = /(https?:\/\/[^\s]+)/gi;
 
-    // --- Находим все ссылки в сообщении ---
+    // --- Находим все ссылки и очищаем от пробелов ---
     const links = (text.match(linkRegex) || []).map(l => l.trim());
     console.log("Найденные ссылки:", links);
 
-    // ✅ Белый список (разрешаем хвосты)
+    // ✅ Белый список (разрешаем любые хвосты и параметры)
     const whitelist = [
-      /^https?:\/\/t\.me\/Happ_VPN_official(\/.*)?$/i,
-      /^https?:\/\/t\.me\/tmstars_chat(\/.*)?$/i,
+      /^https?:\/\/t\.me\/Happ_VPN_official(\/.*)?(\?.*)?$/i,
+      /^https?:\/\/t\.me\/tmstars_chat(\/.*)?(\?.*)?$/i,
     ];
 
-    // Если нет ссылок → ничего не делаем
+    // Если нет ссылок → пропускаем
     if (links.length === 0) return new Response("ok");
 
+    // Проверяем, есть ли запрещённые ссылки
+    let hasBadLink = false;
+    for (const link of links) {
+      if (!whitelist.some(rule => rule.test(link))) {
+        console.log("Запрещённая ссылка:", link);
+        hasBadLink = true;
+        break;
+      }
+    }
+
     // Если все ссылки разрешённые → пропускаем
-    const allWhitelisted = links.every(link => whitelist.some(rule => rule.test(link)));
-    if (allWhitelisted) return new Response("ok");
+    if (!hasBadLink) return new Response("ok");
 
-    // Есть хотя бы одна запрещённая ссылка
-    if (await isAdmin(chatId, userId)) return new Response("ok"); // админ → пропускаем
+    // Если админ → пропускаем
+    if (await isAdmin(chatId, userId)) return new Response("ok");
 
-    // Обычный пользователь → удаляем и мутим
+    // Иначе → удаляем и мутим
     await deleteMessage(chatId, messageId);
     await muteUser(chatId, userId);
     await sendMuteMessage(
@@ -196,6 +205,7 @@ serve(async (req: Request) => {
 
   return new Response("ok");
 });
+
 
 
 
