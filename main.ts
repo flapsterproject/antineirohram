@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from "npm:@google/generative-ai@^0.19.0";
 // Telegram setup
 const TOKEN = Deno.env.get("BOT_TOKEN");
 const API = `https://api.telegram.org/bot${TOKEN}`;
-const SECRET_PATH = "/masakoff";
+const SECRET_PATH = "/";
 
 // Gemini setup
 const GEMINI_API_KEY = "AIzaSyC2tKj3t5oTsrr_a0B1mDxtJcdyeq5uL0U";
