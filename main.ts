@@ -3,9 +3,9 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { GoogleGenerativeAI } from "npm:@google/generative-ai@^0.19.0";
 
 // Telegram setup
-const TOKEN = Deno.env.get("BOT_TOKEN");
-const API = `https://api.telegram.org/bot${TOKEN}`;
-const SECRET_PATH = "/";
+//const TOKEN = Deno.env.get("BOT_TOKEN");
+//const API = `https://api.telegram.org/bot${TOKEN}`;
+//const SECRET_PATH = "/masakoff";
 
 // Gemini setup
 const GEMINI_API_KEY = "AIzaSyC2tKj3t5oTsrr_a0B1mDxtJcdyeq5uL0U";
