@@ -13,34 +13,28 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // -------------------- Telegram Helpers --------------------
-async function sendMessage(
-  chatId: string | number,
-  text: string,
-  replyToMessageId?: number,
-) {
-  const res = await fetch(`${API}/sendMessage`, {
+async function sendMessage(chatId: string | number, text: string, replyTo?: number) {
+  await fetch(`${API}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: chatId,
       text,
-      reply_to_message_id: replyToMessageId, // reply to original message
+      reply_to_message_id: replyTo,
       allow_sending_without_reply: true,
     }),
   });
-  const data = await res.json();
-  return data.result?.message_id;
 }
 
 // -------------------- Gemini Response Generator --------------------
 async function generateResponse(prompt: string): Promise<string> {
   try {
-    const fullPrompt =`Respond as a witty, realistic human — use sarcasm, keep it very short (1–2 sentences), add emojis, and write naturally in Russian, as if chatting with a friend online: ${prompt}`;
+    const fullPrompt = `Respond as a witty, realistic human — use sarcasm, keep it short (1–2 sentences), add emojis, and write naturally in Russian, as if chatting with a friend online: ${prompt}`;
     const result = await model.generateContent(fullPrompt);
     return result.response.text();
   } catch (error) {
     console.error("Gemini error:", error);
-    return "Извини, я завис 🤖💤";
+    return "Ой, что-то пошло не так 😅";
   }
 }
 
@@ -49,19 +43,32 @@ serve(async (req) => {
   try {
     const update = await req.json();
 
-    if (update.message) {
-      const chatId = String(update.message.chat.id);
-      const text = update.message.text;
-      const messageId = update.message.message_id;
+    if (!update.message) return new Response("ok");
 
-      if (text) {
-        const botResponse = await generateResponse(text);
-        await sendMessage(chatId, botResponse, messageId);
-      }
+    const msg = update.message;
+    const chatId = msg.chat.id;
+    const text = msg.text;
+    const messageId = msg.message_id;
+
+    // Ignore messages from bots, channels, or service messages
+    if (!text || msg.from?.is_bot || msg.chat.type === "channel") {
+      return new Response("ok");
     }
+
+    // In group chats, only respond if bot was mentioned
+    if (msg.chat.type === "group" || msg.chat.type === "supergroup") {
+      const botMentioned = text.includes("@") && text.includes("bot");
+      if (!botMentioned) return new Response("ok");
+    }
+
+    // Generate and reply
+    const reply = await generateResponse(text);
+    await sendMessage(chatId, reply, messageId);
+
   } catch (err) {
     console.error("Error handling update:", err);
   }
 
   return new Response("ok");
 });
+
